@@ -14,5 +14,5 @@ model User {
   patient            Patient?
 
   @@unique([email])
-  @@map("user")
+  @@map("users")
 }

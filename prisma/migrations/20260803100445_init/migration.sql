@@ -8,7 +8,7 @@ CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'BLOCKED', 'DELETED');
 CREATE TYPE "Gender" AS ENUM ('MALE', 'FEMALE', 'OTHER');
 
 -- CreateTable
-CREATE TABLE "patient" (
+CREATE TABLE "patients" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -20,11 +20,11 @@ CREATE TABLE "patient" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,
 
-    CONSTRAINT "patient_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "patients_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "user" (
+CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -38,23 +38,23 @@ CREATE TABLE "user" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "user_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "patient_email_key" ON "patient"("email");
+CREATE UNIQUE INDEX "patients_email_key" ON "patients"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "patient_userId_key" ON "patient"("userId");
+CREATE UNIQUE INDEX "patients_userId_key" ON "patients"("userId");
 
 -- CreateIndex
-CREATE INDEX "idx_patient_email" ON "patient"("email");
+CREATE INDEX "idx_patient_email" ON "patients"("email");
 
 -- CreateIndex
-CREATE INDEX "idx_patient_isDeleted" ON "patient"("isDeleted");
+CREATE INDEX "idx_patient_isDeleted" ON "patients"("isDeleted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- AddForeignKey
-ALTER TABLE "patient" ADD CONSTRAINT "patient_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "patients" ADD CONSTRAINT "patients_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

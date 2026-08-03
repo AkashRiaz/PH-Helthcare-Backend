@@ -16,5 +16,5 @@ model Patient {
 
   @@index([email], name: "idx_patient_email")
   @@index([isDeleted], name: "idx_patient_isDeleted")
-  @@map("patient")
+  @@map("patients")
 }
