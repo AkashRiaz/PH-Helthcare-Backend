@@ -20,6 +20,7 @@ app.use(
 app.use(express.urlencoded({ extended: true }))
 
 // Middleware to parse JSON bodies
+// this is the main
 app.use(express.json())
 app.use(cookieParser())
 
