@@ -33,7 +33,7 @@ const registerPatient = catchAsync(async (req: Request, res: Response) => {
   const payload = PatientRegistrationZodSchema.safeParse(req.body);
 
   if (!payload.success) {
-    throw new Error(payload.error.issues[0].message);
+    throw new Error(payload.error.issues.map((issue) => issue.message).join(", "));
   }
 
   const result = await AuthService.registerPatient(payload.data as any);
