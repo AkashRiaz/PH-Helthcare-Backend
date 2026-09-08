@@ -41,8 +41,6 @@ app.post("/zod", async (req: Request, res: Response, next: Function) => {
 
     const result = UserZodSchema.parse(payload);
 
-    console.log("Zod validation result:", result);
-
     res.status(httpStatus.OK).json({
       success: true,
       data: result,
