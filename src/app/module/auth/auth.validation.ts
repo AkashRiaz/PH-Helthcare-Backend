@@ -22,12 +22,12 @@ const PatientRegistrationZodSchema = z.object({
 });
 
 const PatientEmailVerifyZodSchema = z.object({
-  email: z.email("Not email!!"),
+  email: z.email("Email is not valid"),
   otp: z.string().length(6),
 });
 
 const LoginZodSchema = z.object({
-  email: z.email(),
+  email: z.email("Email is not valid"),
   password: z
     .string()
     .min(8, "Password Must Minimum 8 Characters Long.")
