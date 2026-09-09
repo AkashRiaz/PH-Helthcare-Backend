@@ -1,22 +1,61 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { IRequestUser } from "./auth.interface";
 import { AuthService } from "./auth.service";
 import z from "zod";
-import { PatientValidation } from "./auth.validation";
+
+const PatientRegistrationZodSchema = z.object({
+  name: z
+    .string("Not a string!!!")
+    .min(3, "Name must be at least 3 characters long")
+    .max(10, "Name must be at most 10 characters long"),
+  email: z.email("Not a valid email!!!"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long")
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least one lowercase letter",
+    })
+    .regex(/[0-9]/, { message: "Password must contain at least one number" })
+    .regex(/[^A-Za-z0-9]/, {
+      message: "Password must contain at least one special character",
+    }),
+  patient: z
+    .object({
+      contactNumber: z.string().optional(),
+    })
+    .optional(),
+});
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
-  // const payload = PatientValidation.PatientRegistrationZodSchema.safeParse(req.body);
+  const payload = PatientValidation.PatientRegistrationZodSchema.safeParse(req.body);
 
-  // if (!payload.success) {
-  //   throw new Error(payload.error.issues.map((issue) => issue.message).join(", "));
-  // }
+  if (!payload.success) {
+    throw new Error(
+      payload.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
+  await AuthService.registerPatient(payload.data as any);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message:
+      "Verification email sent successfully. Please check your email to verify your account.",
+    data: null,
+  });
+});
+
+const verifyPatientEmail = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
-  // console.log("Payload in registerPatient:", payload);
 
-  const result = await AuthService.registerPatient(payload);
+  const result = await AuthService.verifyPatientEmail(payload);
 
   const { accessToken, refreshToken, user, patient } = result;
 
@@ -36,7 +75,7 @@ const registerPatient = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: "Patient registered successfully",
+    message: "Email Verified Successfully",
     data: {
       accessToken,
       refreshToken,
@@ -151,10 +190,41 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const forgotPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.body;
+    await AuthService.forgotPassword(payload);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "OTP sent to your email successfully",
+      data: null,
+    });
+  },
+);
+
+const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.body;
+    await AuthService.resetPassword(payload);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Password reset successfully",
+      data: null,
+    });
+  },
+);
+
 export const AuthController = {
   registerPatient,
+  verifyPatientEmail,
   loginUser,
   getMe,
   refreshToken,
   googleLogin,
+  forgotPassword,
+  resetPassword,
 };
