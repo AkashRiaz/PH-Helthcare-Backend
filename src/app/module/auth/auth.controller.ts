@@ -34,7 +34,9 @@ const PatientRegistrationZodSchema = z.object({
 });
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
-  const payload = PatientValidation.PatientRegistrationZodSchema.safeParse(req.body);
+  const payload = PatientRegistrationZodSchema.safeParse(
+    req.body,
+  );
 
   if (!payload.success) {
     throw new Error(
@@ -219,6 +221,17 @@ const resetPassword = catchAsync(
   },
 );
 
+const logout = catchAsync(async (req: Request, res: Response) => {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User logged out successfully",
+    data: null,
+  });
+});
+
 export const AuthController = {
   registerPatient,
   verifyPatientEmail,
@@ -228,4 +241,5 @@ export const AuthController = {
   googleLogin,
   forgotPassword,
   resetPassword,
+  logout,
 };
