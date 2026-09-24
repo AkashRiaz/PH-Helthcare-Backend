@@ -24,6 +24,7 @@ import { IQuery } from "../../interfaces";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
 import { addDays, startOfDay } from "date-fns";
+import generateRandomPassword from "../../utils/randomPassword";
 
 const applyAsDoctor = async (
   payload: IApplyAsDoctorPayload,
@@ -97,16 +98,17 @@ const applyAsDoctor = async (
       });
     }),
   );
-  const randomPassword = Math.random().toString(36).slice(-8);
-  const hashedPassword = await bcrypt.hash(
-    randomPassword,
-    Number(config.bcrypt_salt_rounds),
-  );
+  // const randomPassword = Math.random().toString(36).slice(-8);
+  // const hashedPassword = await bcrypt.hash(
+  //   randomPassword,
+  //   Number(config.bcrypt_salt_rounds),
+  // );
 
   const doctorApplication = await prisma.user.create({
     data: {
       ...payload.user,
-      password: hashedPassword,
+      // password: hashedPassword,
+      needPasswordChange: true,
       role: Role.DOCTOR,
       doctor: {
         create: {
@@ -131,8 +133,10 @@ const applyAsDoctor = async (
   const otpKey = `doctor-application:otp:${payload.user.email}`;
   const otpValue = crypto.randomInt(100000, 999999).toString();
 
-  if(config.node_env === "development") {
-    console.log(`Doctor Application OTP for ${payload.user.email}: ${otpValue}`);
+  if (config.node_env === "development") {
+    console.log(
+      `Doctor Application OTP for ${payload.user.email}: ${otpValue}`,
+    );
   }
 
   await redisClient.set(otpKey, otpValue, {
@@ -254,6 +258,22 @@ const approvedDoctor = async (
     );
   }
 
+  const isApproved = verificationStatus === DoctorVerificationStatus.APPROVED;
+
+  const randomDoctorPassword = isApproved
+    ? generateRandomPassword(10)
+    : undefined;
+
+  if (config.node_env === "development" && randomDoctorPassword) {
+    console.log(
+      `Doctor Application Approved. Generated Password for ${existingDoctor.user.email}: ${randomDoctorPassword}`,
+    );
+  }
+
+  const hashedPassword = randomDoctorPassword
+    ? await bcrypt.hash(randomDoctorPassword, Number(config.bcrypt_salt_rounds))
+    : undefined;
+
   const updatedDoctor = await prisma.doctor.update({
     where: { id: doctorId },
     data: {
@@ -264,10 +284,15 @@ const approvedDoctor = async (
           : null,
       reviewedBy: reviewer.userId,
       reviewedAt: new Date(),
+      ...(hashedPassword && {
+        user: {
+          update: {
+            password: hashedPassword,
+          },
+        },
+      }),
     },
   });
-
-  const isApproved = verificationStatus === DoctorVerificationStatus.APPROVED;
 
   const templatePath = path.join(
     process.cwd(),
@@ -281,6 +306,7 @@ const approvedDoctor = async (
   const templateData = {
     name: updatedDoctor.name,
     reason: updatedDoctor.rejectionReason,
+    password: isApproved ? randomDoctorPassword : undefined,
   };
 
   const html = await ejs.renderFile(templatePath, templateData);
