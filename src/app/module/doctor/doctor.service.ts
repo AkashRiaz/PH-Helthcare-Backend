@@ -131,6 +131,10 @@ const applyAsDoctor = async (
   const otpKey = `doctor-application:otp:${payload.user.email}`;
   const otpValue = crypto.randomInt(100000, 999999).toString();
 
+  if(config.node_env === "development") {
+    console.log(`Doctor Application OTP for ${payload.user.email}: ${otpValue}`);
+  }
+
   await redisClient.set(otpKey, otpValue, {
     expiration: {
       type: "EX",
